@@ -446,7 +446,8 @@ export default memo(function MapPreview({
 
                const brightness = getBrightness(px, py);
                if (brightness < 0.95) { // Keep if colored/dark
-                   nodes.push({ x: px, y: py, r: dotSize, regionIdx: 0, brightness }); // dotSize is used in rendering
+                   const ratio = Math.min(1, Math.sqrt((px - cx)**2 + (py - cy)**2) / halfDiag);
+                   nodes.push({ x: px, y: py, r: dotSize, regionIdx: 0, brightness, ratio }); 
                }
            }
        }
@@ -469,10 +470,11 @@ export default memo(function MapPreview({
                const invertedBrightness = 1 - brightness;
                const dotRadius = minSize + (maxSize - minSize) * invertedBrightness * globalSize * (spacing * 0.5) * (dotSize / 3.0);
                
-               const rLevel = dotRadius; // avoid naming collision
+               const rLevel = dotRadius; 
                
                if (rLevel > 0.5) {
-                   nodes.push({ x: px, y: py, r: rLevel, brightness });
+                   const ratio = Math.min(1, Math.sqrt((px - cx)**2 + (py - cy)**2) / halfDiag);
+                   nodes.push({ x: px, y: py, r: rLevel, brightness, ratio });
                }
            }
        }
@@ -505,7 +507,8 @@ export default memo(function MapPreview({
                
                const rLevel = dotRadius;
                if (rLevel > 0.5) {
-                   nodes.push({ x: px, y: py, r: rLevel, brightness });
+                   const ratio = Math.min(1, Math.sqrt((px - cx)**2 + (py - cy)**2) / halfDiag);
+                   nodes.push({ x: px, y: py, r: rLevel, brightness, ratio });
                }
            }
        }
@@ -776,9 +779,10 @@ export default memo(function MapPreview({
                       const lines = [];
                       const defaultRc = colors[0] || '#1877F2';
                       
-                      const getNodeColor = (b) => {
+                      const getNodeColor = (b, geoRatio = 0) => {
                           if (colors.length > 2 && colors[0] !== colors[1]) {
-                              const index = Math.min(colors.length - 1, Math.max(0, Math.floor((b || 0) * colors.length)));
+                              const factor = appMode === 'draw' ? geoRatio : (b || 0);
+                              const index = Math.min(colors.length - 1, Math.max(0, Math.floor(factor * colors.length)));
                               return colors[index];
                           }
                           return defaultRc;
@@ -811,9 +815,10 @@ export default memo(function MapPreview({
                                      const opacity = Math.max(0.15, 1 - (dist / connectDist));
                                      const baseBorder = borderWidth > 0 ? borderWidth : 0.8;
                                      const avgB = ((n1.brightness || 0) + (n2.brightness || 0)) / 2;
+                                     const avgRatio = ((n1.ratio || 0) + (n2.ratio || 0)) / 2;
                                      lines.push(
                                         <line key={`hnl-${i}-${j}`} x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y} 
-                                           stroke={getNodeColor(avgB)} strokeWidth={baseBorder} opacity={opacity} />
+                                           stroke={getNodeColor(avgB, avgRatio)} strokeWidth={baseBorder} opacity={opacity} />
                                      );
                                  }
                              }
@@ -824,9 +829,11 @@ export default memo(function MapPreview({
                          <g className="transition-all duration-500">
                             <g id="halftone-network-lines">{lines}</g>
                             <g id="halftone-network-nodes">
-                               {finalNodes.map((n, i) => (
-                                  renderShape(`hnd-${i}`, halftoneShape, n.x, n.y, dotSize > 0 ? dotSize : 2.5, getNodeColor(n.brightness), "none", borderWidth > 0 ? borderWidth * 0.5 : 0)
-                               ))}
+                               {finalNodes.map((n, i) => {
+                                  let nodeStroke = appMode === 'draw' && shapeOutlineColor && shapeOutlineColor !== 'transparent' ? shapeOutlineColor : 'none';
+                                  let nodeStrokeW = appMode === 'draw' && shapeOutlineColor && shapeOutlineColor !== 'transparent' ? Math.max(0.5, (borderWidth || 0.8) * 0.5) : (borderWidth > 0 ? borderWidth * 0.5 : 0);
+                                  return renderShape(`hnd-${i}`, halftoneShape, n.x, n.y, dotSize > 0 ? dotSize : 2.5, getNodeColor(n.brightness, n.ratio), nodeStroke, nodeStrokeW);
+                               })}
                             </g>
                          </g>
                       );
@@ -837,13 +844,15 @@ export default memo(function MapPreview({
                        
                        let baseDotColor = colors[0] || '#1877F2';
                        if (colors.length > 2 && colors[0] !== colors[1]) {
-                           const index = Math.min(colors.length - 1, Math.max(0, Math.floor((n.brightness || 0) * colors.length)));
+                           const factor = appMode === 'draw' ? (n.ratio || 0) : (n.brightness || 0);
+                           const index = Math.min(colors.length - 1, Math.max(0, Math.floor(factor * colors.length)));
                            baseDotColor = colors[index];
                        }
                        
-                       const fill = outlineMode ? 'transparent' : baseDotColor;
-                       const stroke = outlineMode ? baseDotColor : 'none';
-                       const sWidth = outlineMode ? 1.5 : 0;
+                       const isDrawNode = appMode === 'draw' && shapeOutlineColor && shapeOutlineColor !== 'transparent';
+                       const fill = outlineMode && !isDrawNode ? 'transparent' : baseDotColor;
+                       const stroke = isDrawNode ? shapeOutlineColor : (outlineMode ? baseDotColor : 'none');
+                       const sWidth = isDrawNode ? Math.max(0.5, (borderWidth || 0.8) * 0.5) : (outlineMode ? 1.5 : 0);
                        
                        const currentShape = appMode === 'draw' ? halftoneShape : dotStyle;
                        return renderShape(`hf-${i}`, currentShape, n.x, n.y, n.r, fill, stroke, sWidth);
