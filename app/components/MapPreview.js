@@ -276,14 +276,12 @@ export default memo(function MapPreview({
                const rx = Math.abs(canvasX - origin.x) / 2;
                const ry = Math.abs(canvasY - origin.y) / 2;
                
-               const kappa = 0.5522848;
-               const ox = rx * kappa; 
-               const oy = ry * kappa; 
-               const xe = cx + rx;    
-               const ye = cy + ry;    
-               const xs = cx - rx;    
-               const ys = cy - ry;    
-               dString = `M ${xs},${cy} C ${xs},${cy - oy} ${cx - ox},${ys} ${cx},${ys} C ${cx + ox},${ys} ${xe},${cy - oy} ${xe},${cy} C ${xe},${cy + oy} ${cx + ox},${ye} ${cx},${ye} C ${cx - ox},${ye} ${xs},${cy + oy} ${xs},${cy} Z`;
+               let pts = [];
+               for (let i = 0; i < 48; i++) {
+                   const angle = i * (Math.PI * 2) / 48;
+                   pts.push(`${cx + rx * Math.cos(angle)},${cy + ry * Math.sin(angle)}`);
+               }
+               dString = `M ${pts[0]} L ${pts.slice(1).join(' L ')} Z`;
            } else if (activeDrawTool === 'polygon' || activeDrawTool === 'star') {
                const cx = origin.x;
                const cy = origin.y;
