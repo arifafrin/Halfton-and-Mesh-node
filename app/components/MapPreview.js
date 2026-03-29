@@ -11,6 +11,7 @@ export default memo(function MapPreview({
   customBgColor = '#ffffff',
   layout = 'landscape',
   borderWidth = null,
+  shapeOutlineColor = 'transparent',
   dotSize = 3,
   showAtom = true,
   activeAtomId = 'atom-0', setActiveAtomId,
