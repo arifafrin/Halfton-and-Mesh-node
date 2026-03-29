@@ -25,7 +25,10 @@ export default memo(function MapPreview({
   uploadedImage = null,
   uploadedSvgPaths = null,
   halftoneConfig = null,
-  halftoneShape = 'circle'
+  halftoneShape = 'circle',
+  activeDrawTool = 'pencil',
+  polygonSides = 6,
+  starPoints = 5
 }) {
   const monoPalette = useMemo(() => {
     if (halftoneConfig?.useMonoBlend && halftoneConfig?.monoBlendColor) {
@@ -54,6 +57,7 @@ export default memo(function MapPreview({
 
   // PENCIL DRAWING STATE
   const [drawnPaths, setDrawnPaths] = useState([]);
+  const shapeOriginRef = useRef(null);
   
   // NATIVE SVG IMPORT BRIDGE 
   // Whenever the user uploads an SVG from Illustrator, instantly hydrate the native canvas vectors
@@ -166,9 +170,16 @@ export default memo(function MapPreview({
        const logicalY = ((e.clientY - svgRect.top) / svgRect.height) * dimensions.height;
        const canvasX = (logicalX - transform.x) / transform.k;
        const canvasY = (logicalY - transform.y) / transform.k;
-       const initPath = [{ x: canvasX, y: canvasY }];
-       currentPathRef.current = initPath;
-       setCurrentPath(initPath);
+       
+       if (activeDrawTool === 'pencil') {
+           const initPath = [{ x: canvasX, y: canvasY }];
+           currentPathRef.current = initPath;
+           setCurrentPath(initPath);
+       } else {
+           shapeOriginRef.current = { x: canvasX, y: canvasY };
+           currentPathRef.current = []; // Using this purely to trigger renders if needed, but not pushing pts
+           setCurrentPath([]);
+       }
        
        const livePathEl = document.getElementById('live-draw-path');
        if (livePathEl) {
@@ -232,23 +243,78 @@ export default memo(function MapPreview({
        const canvasX = (logicalX - transform.x) / transform.k;
        const canvasY = (logicalY - transform.y) / transform.k;
        
-       const pts = currentPathRef.current || [];
-       if (pts.length === 0) {
-          currentPathRef.current = [{x: canvasX, y: canvasY}];
-       } else {
-          const last = pts[pts.length - 1];
-          const dx = canvasX - last.x;
-          const dy = canvasY - last.y;
-          if (dx*dx + dy*dy > 9) { // ~3px distance limit
-             pts.push({x: canvasX, y: canvasY});
-             
-             // High-performance direct DOM mutation for 60fps live drawing
-             const livePathEl = document.getElementById('live-draw-path');
-             if (livePathEl) {
-                const dString = 'M ' + pts.map(pt => `${parseFloat(pt.x.toFixed(2))},${parseFloat(pt.y.toFixed(2))}`).join(' L ');
-                livePathEl.setAttribute('d', dString);
-             }
-          }
+       if (activeDrawTool === 'pencil') {
+           const pts = currentPathRef.current || [];
+           if (pts.length === 0) {
+              currentPathRef.current = [{x: canvasX, y: canvasY}];
+           } else {
+              const last = pts[pts.length - 1];
+              const dx = canvasX - last.x;
+              const dy = canvasY - last.y;
+              if (dx*dx + dy*dy > 9) { // ~3px limit
+                 pts.push({x: canvasX, y: canvasY});
+                 const livePathEl = document.getElementById('live-draw-path');
+                 if (livePathEl) {
+                    const dString = 'M ' + pts.map(pt => `${parseFloat(pt.x.toFixed(2))},${parseFloat(pt.y.toFixed(2))}`).join(' L ');
+                    livePathEl.setAttribute('d', dString);
+                 }
+              }
+           }
+       } else if (shapeOriginRef.current) {
+           const origin = shapeOriginRef.current;
+           let dString = '';
+           
+           if (activeDrawTool === 'rectangle') {
+               const minX = Math.min(origin.x, canvasX);
+               const maxX = Math.max(origin.x, canvasX);
+               const minY = Math.min(origin.y, canvasY);
+               const maxY = Math.max(origin.y, canvasY);
+               dString = `M ${minX},${minY} L ${maxX},${minY} L ${maxX},${maxY} L ${minX},${maxY} Z`;
+           } else if (activeDrawTool === 'ellipse') {
+               const cx = (origin.x + canvasX) / 2;
+               const cy = (origin.y + canvasY) / 2;
+               const rx = Math.abs(canvasX - origin.x) / 2;
+               const ry = Math.abs(canvasY - origin.y) / 2;
+               
+               const kappa = 0.5522848;
+               const ox = rx * kappa; 
+               const oy = ry * kappa; 
+               const xe = cx + rx;    
+               const ye = cy + ry;    
+               const xs = cx - rx;    
+               const ys = cy - ry;    
+               dString = `M ${xs},${cy} C ${xs},${cy - oy} ${cx - ox},${ys} ${cx},${ys} C ${cx + ox},${ys} ${xe},${cy - oy} ${xe},${cy} C ${xe},${cy + oy} ${cx + ox},${ye} ${cx},${ye} C ${cx - ox},${ye} ${xs},${cy + oy} ${xs},${cy} Z`;
+           } else if (activeDrawTool === 'polygon' || activeDrawTool === 'star') {
+               const cx = origin.x;
+               const cy = origin.y;
+               const radius = Math.max(1, Math.sqrt(Math.pow(canvasX - cx, 2) + Math.pow(canvasY - cy, 2)));
+               
+               let baseAngle = Math.atan2(canvasY - cy, canvasX - cx);
+               let points = [];
+               
+               if (activeDrawTool === 'polygon') {
+                   for (let i = 0; i < polygonSides; i++) {
+                       const angle = baseAngle + (i * 2 * Math.PI / polygonSides);
+                       points.push(`${cx + radius * Math.cos(angle)},${cy + radius * Math.sin(angle)}`);
+                   }
+               } else {
+                   const innerRadius = radius * 0.4;
+                   for (let i = 0; i < starPoints * 2; i++) {
+                       const angle = baseAngle + (i * Math.PI / starPoints);
+                       const r = (i % 2 === 0) ? radius : innerRadius;
+                       points.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+                   }
+               }
+               if (points.length > 0) dString = `M ${points[0]} L ${points.slice(1).join(' L ')} Z`;
+           }
+           
+           if (dString) {
+               currentPathRef.current = [{ dString }]; // Store the calculated path safely to extract on up
+               const livePathEl = document.getElementById('live-draw-path');
+               if (livePathEl) {
+                  livePathEl.setAttribute('d', dString);
+               }
+           }
        }
        return;
     }
@@ -274,50 +340,59 @@ export default memo(function MapPreview({
     if (mapStyles[style]?.isPencil && isDrawingShapeRef.current) {
        setIsDrawingShape(false);
        isDrawingShapeRef.current = false;
-       const finalPath = currentPathRef.current ? [...currentPathRef.current] : null;
        
        const livePathEl = document.getElementById('live-draw-path');
        if (livePathEl) livePathEl.setAttribute('d', '');
-
-       if (finalPath && finalPath.length > 2) {
-          let isClosed = false;
-          const start = finalPath[0];
-          const end = finalPath[finalPath.length - 1];
-          const dx = end.x - start.x;
-          const dy = end.y - start.y;
-          
-          const screenDistSq = (dx * transform.k) ** 2 + (dy * transform.k) ** 2;
-          
-          if (screenDistSq < 2500) {
-             isClosed = true;
-          }
-          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-          finalPath.forEach(pt => {
-            if (pt.x < minX) minX = pt.x;
-            if (pt.y < minY) minY = pt.y;
-            if (pt.x > maxX) maxX = pt.x;
-            if (pt.y > maxY) maxY = pt.y;
-          });
-          
-          const centerX = ((minX + maxX) / 2 / dimensions.width) * 100;
-          const centerY = ((minY + maxY) / 2 / dimensions.height) * 100;
-          const shapeW = maxX - minX;
-          const shapeH = maxY - minY;
-          
-          const bounds = { minX, minY, maxX, maxY, centerX, centerY, shapeW, shapeH };
-
-          setDrawnPaths(prev => [...prev, { points: finalPath, isClosed, bounds }]);
-          
-          // AUTO-ATOM SPAWNING: Place an atom at the center of the drawn shape
-          if (showAtom && setAtomPositions) {
-             const shapeSizePercent = (Math.min(shapeW, shapeH) / Math.min(dimensions.width, dimensions.height)) * 100;
-             const autoAtomSize = Math.max(4, Math.min(60, shapeSizePercent * 0.25));
-             
-             const newAtomId = `atom-${Date.now()}`;
-             setAtomPositions(prev => [...prev, { id: newAtomId, x: centerX, y: centerY, size: autoAtomSize }]);
-             if (setActiveAtomId) setActiveAtomId(newAtomId);
-          }
+       
+       if (activeDrawTool === 'pencil') {
+           const finalPath = currentPathRef.current ? [...currentPathRef.current] : null;
+           if (finalPath && finalPath.length > 2) {
+              let isClosed = false;
+              const start = finalPath[0];
+              const end = finalPath[finalPath.length - 1];
+              const dx = end.x - start.x;
+              const dy = end.y - start.y;
+              if ((dx * transform.k) ** 2 + (dy * transform.k) ** 2 < 2500) isClosed = true;
+              
+              let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+              finalPath.forEach(pt => {
+                if (pt.x < minX) minX = pt.x;
+                if (pt.y < minY) minY = pt.y;
+                if (pt.x > maxX) maxX = pt.x;
+                if (pt.y > maxY) maxY = pt.y;
+              });
+              
+              const centerX = ((minX + maxX) / 2 / dimensions.width) * 100;
+              const centerY = ((minY + maxY) / 2 / dimensions.height) * 100;
+              const bounds = { minX, minY, maxX, maxY, centerX, centerY, shapeW: maxX - minX, shapeH: maxY - minY };
+              setDrawnPaths(prev => [...prev, { points: finalPath, isClosed, bounds }]);
+           }
+       } else {
+           if (currentPathRef.current && currentPathRef.current[0] && currentPathRef.current[0].dString) {
+               const finalD = currentPathRef.current[0].dString;
+               const coords = finalD.match(/-?[\d.]+/g);
+               if (coords && coords.length >= 2) {
+                   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                   for(let j=0; j<coords.length; j+=2) {
+                       const vx = parseFloat(coords[j]);
+                       const vy = parseFloat(coords[j+1]);
+                       if (!isNaN(vx) && !isNaN(vy)) {
+                           minX = Math.min(minX, vx);
+                           maxX = Math.max(maxX, vx);
+                           minY = Math.min(minY, vy);
+                           maxY = Math.max(maxY, vy);
+                       }
+                   }
+                   if (minX !== Infinity) {
+                       const centerX = ((minX + maxX) / 2 / dimensions.width) * 100;
+                       const centerY = ((minY + maxY) / 2 / dimensions.height) * 100;
+                       const bounds = { minX, minY, maxX, maxY, centerX, centerY, shapeW: maxX - minX, shapeH: maxY - minY };
+                       setDrawnPaths(prev => [...prev, { points: [], isClosed: true, bounds, d: finalD }]);
+                   }
+               }
+           }
        }
+       shapeOriginRef.current = null;
        setCurrentPath(null);
        currentPathRef.current = null;
        try { e.target.releasePointerCapture(e.pointerId); } catch(_) {}

@@ -44,6 +44,11 @@ export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [appMode, setAppMode] = useState('draw'); // 'draw' or 'halftone'
 
+  // Advanced Drawing Tools State
+  const [activeDrawTool, setActiveDrawTool] = useState('pencil');
+  const [polygonSides, setPolygonSides] = useState(6);
+  const [starPoints, setStarPoints] = useState(5);
+
   // Image Halftone State
   const [uploadedImage, setUploadedImage] = useState(null);
   const [uploadedSvgPaths, setUploadedSvgPaths] = useState(null);
@@ -160,16 +165,48 @@ export default function Home() {
             </div>
             
             <div className="flex flex-col gap-3">
-              {/* Pencil Tool Toggle */}
-              <button className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all duration-300 bg-[#1877F2]/10 border-[#1877F2]/50 shadow-inner">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">✏️</span>
-                  <span className="text-[11px] font-bold tracking-wide text-blue-300">Pencil Tool Active</span>
+              <div className="flex bg-[#1877F2]/10 border border-[#1877F2]/30 rounded-xl p-1 gap-1">
+                {[
+                  { id: 'pencil', icon: '✏️', title: 'Pencil Tool' },
+                  { id: 'rectangle', icon: '⬜', title: 'Rectangle Tool' },
+                  { id: 'ellipse', icon: '⭕', title: 'Ellipse Tool' },
+                  { id: 'polygon', icon: '⬡', title: 'Polygon Tool' },
+                  { id: 'star', icon: '⭐', title: 'Star Tool' }
+                ].map(tool => (
+                  <button
+                    key={tool.id}
+                    onClick={() => setActiveDrawTool(tool.id)}
+                    title={tool.title}
+                    className={`flex-1 py-2 rounded-lg flex items-center justify-center text-lg transition-all duration-300 ${
+                      activeDrawTool === tool.id 
+                      ? 'bg-[#1877F2] text-white shadow-[0_0_10px_rgba(24,119,242,0.4)] scale-105' 
+                      : 'bg-transparent text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                    }`}
+                  >
+                    {tool.icon}
+                  </button>
+                ))}
+              </div>
+
+              {activeDrawTool === 'polygon' && (
+                <div className="bg-black/20 border border-white/5 p-3 rounded-xl mt-1">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <p className="text-[10px] font-semibold text-gray-300">Polygon Sides</p>
+                    <span className="text-[10px] font-mono text-[#1877F2]">{polygonSides}</span>
+                  </div>
+                  <input type="range" min="3" max="15" step="1" value={polygonSides} onChange={(e) => setPolygonSides(parseInt(e.target.value))} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#1877F2]" />
                 </div>
-                <div className="w-9 h-5 rounded-full p-1 transition-all duration-300 bg-[#1877F2]">
-                  <div className="w-3 h-3 rounded-full bg-white transition-all duration-300 translate-x-4" />
+              )}
+
+              {activeDrawTool === 'star' && (
+                <div className="bg-black/20 border border-white/5 p-3 rounded-xl mt-1">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <p className="text-[10px] font-semibold text-gray-300">Star Points</p>
+                    <span className="text-[10px] font-mono text-[#1877F2]">{starPoints}</span>
+                  </div>
+                  <input type="range" min="4" max="15" step="1" value={starPoints} onChange={(e) => setStarPoints(parseInt(e.target.value))} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#1877F2]" />
                 </div>
-              </button>
+              )}
 
               {/* Draw Style Dropdown */}
               <StyleSelector
@@ -443,6 +480,9 @@ export default function Home() {
                 shapeOutlineColor={shapeOutlineColor}
                 stockMode={stockMode}
                 layout={layout}
+                activeDrawTool={activeDrawTool}
+                polygonSides={polygonSides}
+                starPoints={starPoints}
                 showLabels={false}
                 showTitle={false}
                 borderWidth={borderWidth}
