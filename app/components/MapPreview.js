@@ -26,6 +26,14 @@ export default memo(function MapPreview({
   halftoneConfig = null,
   halftoneShape = 'circle'
 }) {
+  const monoPalette = useMemo(() => {
+    if (halftoneConfig?.useMonoBlend && halftoneConfig?.monoBlendColor) {
+      return generateMonochromaticPalette(halftoneConfig.monoBlendColor, 10);
+    }
+    return [];
+  }, [halftoneConfig?.useMonoBlend, halftoneConfig?.monoBlendColor]);
+
+  const colors = monoPalette.length > 0 ? monoPalette : originalColors;
   const svgRef = useRef(null);
   const [halftoneNodes, setHalftoneNodes] = useState([]);
 
@@ -506,14 +514,6 @@ export default memo(function MapPreview({
 
   }, [appMode, uploadedImage, halftoneConfig, dimensions, style, atomSize, dotSize, borderWidth, electronCount]);
 
-  const monoPalette = useMemo(() => {
-    if (halftoneConfig?.useMonoBlend && halftoneConfig?.monoBlendColor) {
-      return generateMonochromaticPalette(halftoneConfig.monoBlendColor, 10);
-    }
-    return [];
-  }, [halftoneConfig?.useMonoBlend, halftoneConfig?.monoBlendColor]);
-
-  const colors = monoPalette.length > 0 ? monoPalette : originalColors;
   const styleConfig = mapStyles[style] || mapStyles.pencilbasic;
   const backgroundColor = bgMode === 'transparent' 
     ? 'transparent' 
