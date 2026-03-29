@@ -14,7 +14,7 @@ export default function ColorControls({ colors, onColorsChange, colorMode, onCol
     if (enable) {
        onColorModeChange('blend');
        setMonoBlendColor(globalSolidColor);
-       onColorsChange(generateMonochromaticPalette(globalSolidColor, 18));
+       onColorsChange(generateMonochromaticPalette(globalSolidColor, 10));
     } else {
        onColorModeChange('solid');
        setGlobalSolidColor(monoBlendColor);
@@ -34,7 +34,7 @@ export default function ColorControls({ colors, onColorsChange, colorMode, onCol
     const val = e.target.value.toLowerCase();
     setMonoBlendColor(val);
     onColorModeChange('blend');
-    onColorsChange(generateMonochromaticPalette(val, 18));
+    onColorsChange(generateMonochromaticPalette(val, 10));
     setUseMonoBlend(true);
   };
 

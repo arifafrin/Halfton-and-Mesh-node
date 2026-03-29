@@ -82,16 +82,16 @@ export function generateMonochromaticPalette(baseHex, count = 6) {
 
   const colors = [];
   for (let i = 0; i < count; i++) {
-    // factor from 0.0 (center) to 1.0 (edge)
-    const factor = i / (count - 1 || 1);
+    // factor from 0.0 (center) to 1.0 (edge) using a curve for distinct outer banding
+    const factor = Math.pow(i / (count - 1 || 1), 1.2);
     
-    // Instead of fading to white, we fade to a richer/darker shade of the same hue!
-    // We reduce Lightness by up to 60%, but keep saturation high so it remains a "blend of red".
-    let newL = l - (l * 0.6 * factor);
-    // Add a slight saturation boost towards the edges for neon crispness
-    let newS = Math.min(100, s + (factor * 15));
+    // Extreme reduction in Lightness (down to 8%) to guarantee high contrast across all 18 bands (making them look like 8-10 distinct jumps!
+    let newL = Math.max(8, l - (l * 0.88 * factor));
+    // Saturation stays rich, Hue shifts slightly (25 deg) for a deep, complex gradient
+    let newS = Math.min(100, s + (factor * 20));
+    let newH = (h + (factor * 25)) % 360;
     
-    colors.push(hslToHex(h, newS, newL));
+    colors.push(hslToHex(newH, newS, newL));
   }
   return colors;
 }
