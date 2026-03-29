@@ -82,14 +82,13 @@ export function generateMonochromaticPalette(baseHex, count = 6) {
 
   const colors = [];
   for (let i = 0; i < count; i++) {
-    // factor from 0.0 (center) to 1.0 (edge) using a curve for distinct outer banding
-    const factor = Math.pow(i / (count - 1 || 1), 1.2);
+    const factor = i / (count - 1 || 1);
     
-    // Extreme reduction in Lightness (down to 8%) to guarantee high contrast across all 18 bands (making them look like 8-10 distinct jumps!
-    let newL = Math.max(8, l - (l * 0.88 * factor));
-    // Saturation stays rich, Hue shifts slightly (25 deg) for a deep, complex gradient
-    let newS = Math.min(100, s + (factor * 20));
-    let newH = (h + (factor * 25)) % 360;
+    // Instead of turning black or white, we employ a Premium Generative Art trick:
+    // Analagous Hue Shifting! We shift Hue by 45 degrees and keep Lightness high.
+    let newL = Math.max(5, l - (factor * 12)); 
+    let newS = Math.min(100, s + (factor * 15));
+    let newH = (h + (factor * 45)) % 360;
     
     colors.push(hslToHex(newH, newS, newL));
   }
