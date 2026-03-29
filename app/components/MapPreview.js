@@ -57,6 +57,7 @@ export default memo(function MapPreview({
 
   // PENCIL DRAWING STATE
   const [drawnPaths, setDrawnPaths] = useState([]);
+  const [penPath, setPenPath] = useState([]);
   const shapeOriginRef = useRef(null);
   
   // NATIVE SVG IMPORT BRIDGE 
@@ -153,6 +154,27 @@ export default memo(function MapPreview({
     return () => svgEl.removeEventListener('wheel', handleWheel);
   }, [dimensions]);
 
+  useEffect(() => {
+    const handleGlobalKey = (e) => {
+      if (e.key === 'Escape') {
+          if (penPath && penPath.length > 1) {
+              const dString = 'M ' + penPath.map(p => `${parseFloat(p.x.toFixed(2))},${parseFloat(p.y.toFixed(2))}`).join(' L ');
+              setDrawnPaths(prev => [...prev, {
+                  id: `pen-${Date.now()}`,
+                  d: dString,
+                  points: [...penPath],
+                  isClosed: false
+              }]);
+          }
+          setPenPath([]);
+          const livePathEl = document.getElementById('live-draw-path');
+          if (livePathEl) livePathEl.setAttribute('d', '');
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
+  }, [penPath]);
+
   const handlePointerDown = (e) => {
     // Check if middle mouse button (button 1) is pressed for panning
     if (e.button === 1 || e.altKey) {
@@ -163,13 +185,50 @@ export default memo(function MapPreview({
     }
 
     if (mapStyles[style]?.isPencil) {
-       setIsDrawingShape(true);
-       isDrawingShapeRef.current = true;
        const svgRect = svgRef.current.getBoundingClientRect();
        const logicalX = ((e.clientX - svgRect.left) / svgRect.width) * dimensions.width;
        const logicalY = ((e.clientY - svgRect.top) / svgRect.height) * dimensions.height;
        const canvasX = (logicalX - transform.x) / transform.k;
        const canvasY = (logicalY - transform.y) / transform.k;
+       
+       if (activeDrawTool === 'pen') {
+           const newPt = { x: canvasX, y: canvasY };
+           if (penPath.length === 0) {
+               setPenPath([newPt]);
+           } else {
+               const start = penPath[0];
+               const distToStart = Math.sqrt(Math.pow(newPt.x - start.x, 2) + Math.pow(newPt.y - start.y, 2));
+               if (penPath.length > 2 && distToStart < (15 / transform.k)) {
+                   const dString = 'M ' + penPath.map(p => `${parseFloat(p.x.toFixed(2))},${parseFloat(p.y.toFixed(2))}`).join(' L ') + ' Z';
+                   setDrawnPaths(prev => [...prev, {
+                       id: `pen-${Date.now()}`,
+                       d: dString,
+                       points: [...penPath, start], // close the loop mathematically too
+                       isClosed: true
+                   }]);
+                   setPenPath([]);
+                   const livePathEl = document.getElementById('live-draw-path');
+                   if (livePathEl) livePathEl.setAttribute('d', '');
+                   return;
+               } else {
+                   let finalX = canvasX;
+                   let finalY = canvasY;
+                   if (e.shiftKey) {
+                       const last = penPath[penPath.length - 1];
+                       const angle = Math.atan2(canvasY - last.y, canvasX - last.x);
+                       const snapped = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+                       const dist = Math.sqrt(Math.pow(canvasX - last.x, 2) + Math.pow(canvasY - last.y, 2));
+                       finalX = last.x + dist * Math.cos(snapped);
+                       finalY = last.y + dist * Math.sin(snapped);
+                   }
+                   setPenPath(prev => [...prev, { x: finalX, y: finalY }]);
+               }
+           }
+           return;
+       }
+       
+       setIsDrawingShape(true);
+       isDrawingShapeRef.current = true;
        
        if (activeDrawTool === 'pencil') {
            const initPath = [{ x: canvasX, y: canvasY }];
@@ -236,14 +295,31 @@ export default memo(function MapPreview({
        return;
     }
 
-    if (mapStyles[style]?.isPencil && isDrawingShapeRef.current) {
+    if (mapStyles[style]?.isPencil && (isDrawingShapeRef.current || (activeDrawTool === 'pen' && penPath.length > 0))) {
        const svgRect = svgRef.current.getBoundingClientRect();
        const logicalX = ((e.clientX - svgRect.left) / svgRect.width) * dimensions.width;
        const logicalY = ((e.clientY - svgRect.top) / svgRect.height) * dimensions.height;
        const canvasX = (logicalX - transform.x) / transform.k;
        const canvasY = (logicalY - transform.y) / transform.k;
        
-       if (activeDrawTool === 'pencil') {
+       if (activeDrawTool === 'pen') {
+           let curX = canvasX;
+           let curY = canvasY;
+           const last = penPath[penPath.length - 1];
+           if (e.shiftKey) {
+               const angle = Math.atan2(curY - last.y, curX - last.x);
+               const snappedAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+               const dist = Math.sqrt(Math.pow(curX - last.x, 2) + Math.pow(curY - last.y, 2));
+               curX = last.x + dist * Math.cos(snappedAngle);
+               curY = last.y + dist * Math.sin(snappedAngle);
+           }
+           const dString = 'M ' + penPath.map(p => `${parseFloat(p.x.toFixed(2))},${parseFloat(p.y.toFixed(2))}`).join(' L ') + ` L ${curX},${curY}`;
+           const livePathEl = document.getElementById('live-draw-path');
+           if (livePathEl) {
+              livePathEl.setAttribute('d', dString);
+           }
+           return;
+       } else if (activeDrawTool === 'pencil') {
            const pts = currentPathRef.current || [];
            if (pts.length === 0) {
               currentPathRef.current = [{x: canvasX, y: canvasY}];
