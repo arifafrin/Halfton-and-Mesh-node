@@ -823,7 +823,7 @@ export default memo(function MapPreview({
                             <g id="halftone-network-lines">{lines}</g>
                             <g id="halftone-network-nodes">
                                {finalNodes.map((n, i) => (
-                                  renderShape(`hnd-${i}`, halftoneShape, n.x, n.y, dotSize > 0 ? dotSize : 2.5, getNodeColor(n.brightness), "#ffffff", borderWidth > 0 ? borderWidth * 0.5 : 0.5)
+                                  renderShape(`hnd-${i}`, halftoneShape, n.x, n.y, dotSize > 0 ? dotSize : 2.5, getNodeColor(n.brightness), "none", borderWidth > 0 ? borderWidth * 0.5 : 0)
                                ))}
                             </g>
                          </g>
@@ -894,7 +894,12 @@ export default memo(function MapPreview({
                      // Add outline points as nodes
                      const outlineStep = Math.max(1, Math.floor(outlinePoints.length / 80));
                      for (let i = 0; i < outlinePoints.length; i += outlineStep) {
-                         nodes.push({ x: outlinePoints[i].x, y: outlinePoints[i].y, regionIdx: p.index });
+                         nodes.push({ 
+                             x: outlinePoints[i].x, 
+                             y: outlinePoints[i].y, 
+                             regionIdx: p.index,
+                             ratio: (outlinePoints[i].x - b.minX) / (b.maxX - b.minX || 1)
+                         });
                      }
                      
                      // FILL THE INTERIOR with grid points using point-in-polygon ray casting
@@ -918,7 +923,12 @@ export default memo(function MapPreview({
                                  const nx = gx + (Math.random() - 0.5) * jitter;
                                  const ny = gy + (Math.random() - 0.5) * jitter;
                                  if (isInsideShape(nx, ny)) {
-                                     nodes.push({ x: nx, y: ny, regionIdx: p.index });
+                                     nodes.push({ 
+                                         x: nx, 
+                                         y: ny, 
+                                         regionIdx: p.index,
+                                         ratio: (nx - b.minX) / (b.maxX - b.minX || 1)
+                                     });
                                  }
                              }
                          }
@@ -972,7 +982,9 @@ export default memo(function MapPreview({
                              if (isPlanar) {
                                  const opacity = Math.max(0.15, 1 - (dist / connectDist));
                                  const baseBorder = borderWidth > 0 ? borderWidth : 0.8;
-                                 const regionColor = colors[(n1.regionIdx || 0) % (colors.length || 1)] || '#888';
+                                 const cLen = colors.length || 1;
+                                 const cIdx1 = Math.min(cLen - 1, Math.max(0, Math.floor((n1.ratio || 0) * cLen)));
+                                 const regionColor = colors.length > 2 ? colors[cIdx1] : (colors[(n1.regionIdx || 0) % cLen] || '#888');
                                  lines.push(
                                     <line 
                                        key={`mesh-ln-${i}-${j}`} 
@@ -992,10 +1004,12 @@ export default memo(function MapPreview({
                       <g id="mesh-lines">{lines}</g>
                       <g id="mesh-nodes">
                         {finalNodes.map((n, i) => {
-                           const regionColor = colors[(n.regionIdx || 0) % (colors.length || 1)] || '#888';
+                           const cLen = colors.length || 1;
+                           const cIdx = Math.min(cLen - 1, Math.max(0, Math.floor((n.ratio || 0) * cLen)));
+                           const regionColor = colors.length > 2 ? colors[cIdx] : (colors[(n.regionIdx || 0) % cLen] || '#888');
                            const baseRadius = dotSize > 0 ? dotSize : 2.5;
                            return (
-                               renderShape(`mesh-nd-${i}`, halftoneShape, n.x, n.y, baseRadius, regionColor, "#ffffff", borderWidth > 0 ? borderWidth * 0.5 : 0.5)
+                               renderShape(`mesh-nd-${i}`, halftoneShape, n.x, n.y, baseRadius, regionColor, "none", borderWidth > 0 ? borderWidth * 0.5 : 0)
                            );
                         })}
                       </g>
