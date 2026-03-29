@@ -14,14 +14,6 @@ export const aiColorThemes = {
  * Advanced Styles Dictionary
  */
 export const mapStyles = {
-  pencilbasic: {
-    id: 'pencilbasic', name: 'Flat Outline', icon: '📝',
-    background: '#0a0a0f',
-    stroke: '#ffffff', strokeWidth: 2,
-    fontColor: '#ffffff', fontFamily: 'Courier New, monospace',
-    isPencil: true,
-    regionColors: ['transparent'],
-  },
   pencilmesh: {
     id: 'pencilmesh', name: 'Gradient Mesh', icon: '✏️',
     background: '#ffffff',

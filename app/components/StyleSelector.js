@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { mapStyles } from '../utils/colorUtils';
 
-export default function StyleSelector({ selectedStyle, onSelect, label = "Map Style", stylesList }) {
+export default function StyleSelector({ selectedStyle, onSelect, label = "Shape Style", stylesList }) {
   const styles = stylesList || Object.values(mapStyles).filter(s => !s.isPencil);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -35,7 +35,7 @@ export default function StyleSelector({ selectedStyle, onSelect, label = "Map St
         <span className="flex items-center gap-3">
           <span className="text-xl">{isValidStyleForThisDropdown ? activeStyle.icon : '🎨'}</span>
           <span className="text-sm font-medium text-gray-200">
-            {isValidStyleForThisDropdown ? activeStyle.name : (label === 'Map Style' ? 'Map Style' : 'Choose Map Style')}
+            {isValidStyleForThisDropdown ? activeStyle.name : (label === 'Shape Style' ? 'Shape Style' : 'Choose Shape Style')}
           </span>
         </span>
         <svg
@@ -50,7 +50,7 @@ export default function StyleSelector({ selectedStyle, onSelect, label = "Map St
         <div className="absolute z-50 w-full left-0 mt-2 p-3 rounded-xl bg-gray-900/95 backdrop-blur-xl border border-white/10 shadow-2xl shadow-emerald-500/10 max-h-[550px] overflow-y-auto custom-scrollbar">
           <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-              Select Map Style
+              Select Shape Style
             </span>
             <span className="text-[10px] font-mono text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">
               {styles.length} Styles
@@ -63,15 +63,15 @@ export default function StyleSelector({ selectedStyle, onSelect, label = "Map St
             <button
               key={style.id}
               onClick={() => onSelect(style.id)}
-              className={`flex flex-col items-start gap-1.5 p-3.5 rounded-xl border transition-all duration-300 text-left group relative overflow-hidden ${
+              className={`flex flex-col items-start gap-1 p-2.5 rounded-xl border transition-all duration-300 text-left group relative overflow-hidden ${
                 isSelected
                   ? 'bg-purple-500/20 border-purple-500/50 shadow-lg shadow-purple-500/10'
                   : 'bg-white/5 border-white/10 hover:border-purple-500/30 hover:bg-white/8'
               }`}
             >
-              <div className="flex items-center gap-2.5 w-full">
-                <span className="text-lg shrink-0">{style.icon}</span>
-                <span className={`text-xs font-semibold leading-tight ${isSelected ? 'text-purple-300' : 'text-gray-200'}`}>
+              <div className="flex items-center gap-1.5 w-full">
+                <span className="text-base shrink-0">{style.icon}</span>
+                <span className={`text-[10px] font-semibold leading-tight break-words ${isSelected ? 'text-purple-300' : 'text-gray-200'}`}>
                   {style.name}
                 </span>
               </div>

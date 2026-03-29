@@ -28,7 +28,9 @@ export default memo(function MapPreview({
   halftoneShape = 'circle',
   activeDrawTool = 'pencil',
   polygonSides = 6,
-  starPoints = 5
+  setPolygonSides,
+  starPoints = 5,
+  setStarPoints
 }) {
   const monoPalette = useMemo(() => {
     if (halftoneConfig?.useMonoBlend && halftoneConfig?.monoBlendColor) {
@@ -80,6 +82,7 @@ export default memo(function MapPreview({
   // Refs to avoid stale closures in pointer handlers
   const isDrawingShapeRef = useRef(false);
   const currentPathRef = useRef(null);
+  const lastPointerEventRef = useRef(null);
   
   const activeAtomIdRef = useRef(activeAtomId);
   const atomSizeRef = useRef(atomSize);
@@ -103,11 +106,56 @@ export default memo(function MapPreview({
       setCurrentPath(null);
     }
   }, [clearDrawingsTrigger]);
-
   // Reset transform when dimensions change
   useEffect(() => {
     setTransform({ x: 0, y: 0, k: 1 });
   }, [dimensions]);
+
+  // Handle keyboard inputs for modifying shape points during drawing
+  useEffect(() => {
+    const triggerRedraw = () => {
+       setTimeout(() => {
+          if (lastPointerEventRef.current && svgRef.current) {
+              const { clientX, clientY, shiftKey, altKey } = lastPointerEventRef.current;
+              // Dispatch a synthetic pointer move to force an instant redraw with the new state
+              svgRef.current.dispatchEvent(new PointerEvent('pointermove', {
+                  bubbles: true,
+                  cancelable: true,
+                  clientX, clientY, shiftKey, altKey
+              }));
+          }
+       }, 5); // tiny delay to let React state flush
+    };
+
+    const handleKeyDown = (e) => {
+      if (isDrawingShapeRef.current) {
+        if (activeDrawTool === 'star' && setStarPoints) {
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setStarPoints(p => Math.min(30, p + 1));
+            triggerRedraw();
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setStarPoints(p => Math.max(3, p - 1));
+            triggerRedraw();
+          }
+        } else if (activeDrawTool === 'polygon' && setPolygonSides) {
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setPolygonSides(p => Math.min(30, p + 1));
+            triggerRedraw();
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setPolygonSides(p => Math.max(3, p - 1));
+            triggerRedraw();
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeDrawTool, setStarPoints, setPolygonSides]);
 
   // Native wheel event hook to prevent scrolling while zooming
   useEffect(() => {
@@ -280,6 +328,8 @@ export default memo(function MapPreview({
   };
 
   const handlePointerMove = (e) => {
+    lastPointerEventRef.current = { clientX: e.clientX, clientY: e.clientY, shiftKey: e.shiftKey, altKey: e.altKey };
+
     if (draggingAtomId && setAtomPositions) {
        const bounds = svgRef.current.getBoundingClientRect();
        const mouseX = (e.clientX - bounds.left) * (dimensions.width / bounds.width);
@@ -874,8 +924,8 @@ export default memo(function MapPreview({
     if (!path.d) return null;
     
     let displayFill = path.fillColor;
-    if (styleConfig.isDotted && !styleConfig.isRadialDotted) displayFill = `url(#dot-${path.id})`;
-    if (styleConfig.isRadialDotted) displayFill = 'transparent'; 
+    if (styleConfig.isDotted && !styleConfig.isRadialDotted && styleConfig.id !== 'pencilnetwork') displayFill = `url(#dot-${path.id})`;
+    if (styleConfig.isRadialDotted || styleConfig.id === 'pencilnetwork') displayFill = 'transparent'; 
     
     // Fix: Match the drawing outline to the primary node color if it is a Gradient Mesh
     const baseStroke = (styleConfig.id === 'pencilmesh' && colors[0] && colors[0] !== 'transparent') 
@@ -884,12 +934,12 @@ export default memo(function MapPreview({
     const displayStroke = (shapeOutlineColor && shapeOutlineColor !== 'transparent') ? shapeOutlineColor : baseStroke;
 
     let radialDots = null;
-    if (styleConfig.isRadialDotted && path.bounds) {
+    if ((styleConfig.isRadialDotted || styleConfig.id === 'pencilnetwork') && path.bounds) {
        const b = path.bounds;
        const cx = (b.minX + b.maxX) / 2;
        const cy = (b.minY + b.maxY) / 2;
        const maxDist = Math.hypot(b.maxX - cx, b.maxY - cy);
-       const spacing = Math.max(2, dotSize * 2.8);
+       const spacing = Math.max(2, dotSize * (styleConfig.id === 'pencilnetwork' ? 3.5 : 2.8));
        const dots = [];
        
        // Parse the drawn path into polygon vertices for precise shape testing
@@ -902,7 +952,9 @@ export default memo(function MapPreview({
             
             const dist = Math.hypot(x - cx, y - cy);
             const ratio = Math.max(0, 1 - (dist / maxDist));
-            const r = (dotSize * 0.8) * ratio;
+            
+            const r = styleConfig.id === 'pencilnetwork' ? (dotSize * 0.8) : ((dotSize * 0.8) * ratio);
+            
             if (r > 0.4) {
                let dotColor = path.fillColor;
                if (colors && colors.length > 0) {
@@ -918,7 +970,7 @@ export default memo(function MapPreview({
 
     return (
       <g key={`group-${path.index}`}>
-        {!styleConfig.isRadialDotted && (
+        {!(styleConfig.isRadialDotted || styleConfig.id === 'pencilnetwork') && (
           <path
             key={`path-${path.index}`}
             id={path.id}
@@ -1136,8 +1188,11 @@ export default memo(function MapPreview({
                          const jitter = gridSpacing * 0.45;
                          for (let gx = b.minX; gx <= b.maxX; gx += gridSpacing) {
                              for (let gy = b.minY; gy <= b.maxY; gy += gridSpacing) {
-                                 const nx = gx + (Math.random() - 0.5) * jitter;
-                                 const ny = gy + (Math.random() - 0.5) * jitter;
+                                 // Use deterministic pseudo-random based on grid coordinates so the mesh doesn't jitter rapidly on re-renders
+                                 const pseudoRandomX = Math.abs((Math.sin(gx * 12.9898 + gy * 78.233) * 43758.5453123) % 1);
+                                 const pseudoRandomY = Math.abs((Math.sin(gx * 78.233 + gy * 12.9898) * 43758.5453123) % 1);
+                                 const nx = gx + (pseudoRandomX - 0.5) * jitter;
+                                 const ny = gy + (pseudoRandomY - 0.5) * jitter;
                                  if (isInsideShape(nx, ny)) {
                                      nodes.push({ 
                                          x: nx, 

@@ -10,7 +10,7 @@ import ImageUploader from './components/ImageUploader';
 import { mapStyles } from './utils/colorUtils';
 
 export default function Home() {
-  const [selectedStyle, setSelectedStyle] = useState('pencilbasic');
+  const [selectedStyle, setSelectedStyle] = useState('pencilmesh');
   const [colors, setColors] = useState(Array(18).fill('#ff006e'));
   const [colorMode, setColorMode] = useState('solid');
   const [clearDrawingsTrigger, setClearDrawingsTrigger] = useState(0);
@@ -89,7 +89,7 @@ export default function Home() {
 
   useEffect(() => {
     const savedStyle = localStorage.getItem('vds_selectedStyle');
-    setSelectedStyle(savedStyle || 'pencilbasic');
+    setSelectedStyle(savedStyle || 'pencilmesh');
     setIsLoaded(true);
   }, []);
 
@@ -169,7 +169,6 @@ export default function Home() {
                 {[
                   { id: 'pencil', icon: '✏️', title: 'Pencil Tool' },
                   { id: 'pen', icon: '🖋️', title: 'Pen Tool (Point-to-Point)' },
-                  { id: 'line', icon: '📏', title: 'Line Tool' },
                   { id: 'rectangle', icon: '⬜', title: 'Rectangle Tool' },
                   { id: 'ellipse', icon: '⭕', title: 'Ellipse Tool' },
                   { id: 'polygon', icon: '⬡', title: 'Polygon Tool' },
@@ -190,25 +189,7 @@ export default function Home() {
                 ))}
               </div>
 
-              {activeDrawTool === 'polygon' && (
-                <div className="bg-black/20 border border-white/5 p-3 rounded-xl mt-1">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <p className="text-[10px] font-semibold text-gray-300">Polygon Sides</p>
-                    <span className="text-[10px] font-mono text-[#1877F2]">{polygonSides}</span>
-                  </div>
-                  <input type="range" min="3" max="15" step="1" value={polygonSides} onChange={(e) => setPolygonSides(parseInt(e.target.value))} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#1877F2]" />
-                </div>
-              )}
-
-              {activeDrawTool === 'star' && (
-                <div className="bg-black/20 border border-white/5 p-3 rounded-xl mt-1">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <p className="text-[10px] font-semibold text-gray-300">Star Points</p>
-                    <span className="text-[10px] font-mono text-[#1877F2]">{starPoints}</span>
-                  </div>
-                  <input type="range" min="4" max="15" step="1" value={starPoints} onChange={(e) => setStarPoints(parseInt(e.target.value))} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#1877F2]" />
-                </div>
-              )}
+              {/* The polygon and star sliders have been removed to allow direct keyboard mapping inside MapPreview */}
 
               {/* Draw Style Dropdown */}
               <StyleSelector
@@ -413,6 +394,11 @@ export default function Home() {
               pinColor={pinColor} setPinColor={setPinColor}
               pinEnabled={pinEnabled}
               disabled={appMode === 'halftone'}
+              selectedStyle={appMode === 'halftone' ? 'none' : selectedStyle}
+              atomSize={atomSize} setAtomSize={setAtomSize}
+              dotSize={dotSize} setDotSize={setDotSize}
+              electronCount={electronCount} setElectronCount={setElectronCount}
+              borderWidth={borderWidth} setBorderWidth={setBorderWidth}
             />
           </div>
           
@@ -484,7 +470,9 @@ export default function Home() {
                 layout={layout}
                 activeDrawTool={activeDrawTool}
                 polygonSides={polygonSides}
+                setPolygonSides={setPolygonSides}
                 starPoints={starPoints}
+                setStarPoints={setStarPoints}
                 showLabels={false}
                 showTitle={false}
                 borderWidth={borderWidth}

@@ -214,6 +214,12 @@ export async function buildStockReadySVG(svgElement, countryName, options = { st
       }
   });
   
+  // CRITICAL FIX: Replace ALL fill="transparent" with fill="none" globally.
+  // Adobe Illustrator does NOT understand SVG 'transparent' keyword — it renders it as solid black fill.
+  // This is the root cause of the black shape appearing when ungrouping Gradient Mesh in Illustrator.
+  const allElementsGlobal = Array.from(clone.querySelectorAll('[fill="transparent"]'));
+  allElementsGlobal.forEach(el => el.setAttribute('fill', 'none'));
+  
   // 3. Clean root styles and React specific attributes
   // Strip all unresolved filter URLs to completely prevent Adobe Illustrator [STEX] parsing exceptions
   const elementsWithFilters = Array.from(clone.querySelectorAll('[filter]'));
@@ -272,21 +278,32 @@ export async function buildStockReadySVG(svgElement, countryName, options = { st
       const allDotElements = Array.from(mapRegionsGroup.querySelectorAll('circle, rect, polygon, path'));
       
       // Check if this is a halftone-style export (dots only, no outline paths)
-      const isHalftoneExport = allDotElements.length > 10; // Halftones have many small elements
+      // IMPORTANT: Gradient Mesh (pencilmesh) has many circle/line elements but is NOT halftone.
+      // We detect halftone by checking the style ID to avoid misidentifying Gradient Mesh.
+      const isGradientMesh = styleConfig && (styleConfig.id === 'pencilmesh' || styleConfig.isNeuralMesh);
+      const isHalftoneExport = !isGradientMesh && allDotElements.length > 10; // Halftones have many small elements
       
       if (isHalftoneExport) {
           // Flatten everything — put dots directly into mainGroup (no extra nesting)
           allDotElements.forEach(el => {
               const fill = el.getAttribute('fill');
-              if (fill === 'transparent' || fill === 'none') return;
+              if (fill === 'none' || fill === 'transparent') return;
               mainGroup.appendChild(el);
           });
           // Skip adding regionGroupOut entirely for halftone
       } else {
           // Non-halftone: preserve original group structure
+          // This also includes Gradient Mesh which needs the stroke outline exported
           const subGroups = Array.from(mapRegionsGroup.children);
           subGroups.forEach((subG, groupIndex) => {
               if (subG.tagName.toLowerCase() === 'path') {
+                  const fill = subG.getAttribute('fill');
+                  const stroke = subG.getAttribute('stroke');
+                  const sWidth = parseFloat(subG.getAttribute('stroke-width')) || 0;
+                  
+                  // Skip invisible boundary paths BUT KEEP them if they have a valid stroke outline!
+                  if ((fill === 'none' || fill === 'transparent') && (!stroke || stroke === 'none' || stroke === 'transparent' || sWidth === 0)) return;
+                  
                   const titleEl = subG.querySelector('title');
                   const regionName = titleEl ? titleEl.textContent : `custom-shape-${groupIndex}`;
                   if (titleEl) titleEl.remove();
@@ -310,6 +327,13 @@ export async function buildStockReadySVG(svgElement, countryName, options = { st
                       const tag = child.tagName.toLowerCase();
                       
                       if (tag === 'path') {
+                          const fill = child.getAttribute('fill');
+                          const stroke = child.getAttribute('stroke');
+                          const sWidth = parseFloat(child.getAttribute('stroke-width')) || 0;
+                          
+                          // Skip invisible boundary paths BUT KEEP them if they have a valid stroke outline!
+                          if ((fill === 'none' || fill === 'transparent') && (!stroke || stroke === 'none' || stroke === 'transparent' || sWidth === 0)) return;
+                          
                           const titleEl = child.querySelector('title');
                           const regionName = titleEl ? titleEl.textContent : `region-${index + 1}`;
                           if (titleEl) titleEl.remove();
@@ -333,8 +357,8 @@ export async function buildStockReadySVG(svgElement, countryName, options = { st
                   regionGroupOut.appendChild(newG);
               }
           });
+          mainGroup.appendChild(regionGroupOut);
       }
-      mainGroup.appendChild(regionGroupOut);
   }
 
   // Extract labels and overlay elements
@@ -394,9 +418,22 @@ export async function buildStockReadySVG(svgElement, countryName, options = { st
 
   const mapNeuralMeshGroup = clone.querySelector('#neural-mesh-overlay');
   if (mapNeuralMeshGroup) {
-      // Create a clean distinct master grouping layer for the Neural Mesh
+      // Create a clean distinct master grouping layer for the Neural Mesh / Gradient Mesh
       const meshGroupIn = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      meshGroupIn.setAttribute('id', 'Neural-Network-Mesh');
+      meshGroupIn.setAttribute('id', 'Gradient-Mesh');
+      
+      // CRITICAL: Strip ALL clip-path attributes from mesh nodes and lines.
+      // Gradient Mesh nodes must NEVER be clipped — they are free-floating point elements.
+      const meshChildren = Array.from(mapNeuralMeshGroup.querySelectorAll('*'));
+      meshChildren.forEach(el => {
+          el.removeAttribute('clip-path');
+          el.removeAttribute('clipPath');
+          el.removeAttribute('clip');
+      });
+      mapNeuralMeshGroup.removeAttribute('clip-path');
+      mapNeuralMeshGroup.removeAttribute('clipPath');
+      mapNeuralMeshGroup.removeAttribute('clip');
+      
       Array.from(mapNeuralMeshGroup.children).forEach(el => meshGroupIn.appendChild(el));
       mainGroup.appendChild(meshGroupIn);
   }

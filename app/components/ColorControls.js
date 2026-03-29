@@ -3,11 +3,18 @@
 import { useState } from 'react';
 import { aiColorThemes, generateRandomPalette, generateMonochromaticPalette } from '../utils/colorUtils';
 
-export default function ColorControls({ colors, onColorsChange, colorMode, onColorModeChange, bgMode, setBgMode, customBgColor, setCustomBgColor, shapeOutlineColor, setShapeOutlineColor, pinColor, setPinColor, pinEnabled, disabled }) {
+export default function ColorControls({ 
+  colors, onColorsChange, colorMode, onColorModeChange, bgMode, setBgMode, 
+  customBgColor, setCustomBgColor, shapeOutlineColor, setShapeOutlineColor, 
+  pinColor, setPinColor, pinEnabled, disabled,
+  selectedStyle, atomSize, setAtomSize, dotSize, setDotSize,
+  electronCount, setElectronCount, borderWidth, setBorderWidth
+}) {
 
   const [globalSolidColor, setGlobalSolidColor] = useState(colors[0] || '#1877F2');
   const [monoBlendColor, setMonoBlendColor] = useState('#ff4500');
   const [useMonoBlend, setUseMonoBlend] = useState(false);
+  const [isMeshSettingsOpen, setIsMeshSettingsOpen] = useState(false);
 
   const handleToggleMonoBlend = (enable) => {
     setUseMonoBlend(enable);
@@ -114,30 +121,82 @@ export default function ColorControls({ colors, onColorsChange, colorMode, onCol
            </div>
         )}
         
-        {/* Option: Shape Outline Color */}
-        <div className="flex items-center justify-between p-3 rounded-xl bg-pink-500/10 border border-pink-500/20 shadow-[0_0_15px_rgba(236,72,153,0.05)] transition-all group animate-fade-in mt-3">
-            <div>
-                <span className="text-[11px] font-bold text-pink-300 block tracking-wide">Shape Outline</span>
-                <span className="text-[9px] text-pink-300/60 block mt-0.5">Boundary stroke color</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setShapeOutlineColor('transparent')}
-                  className={`px-2 py-1 text-[9px] rounded font-bold border ${shapeOutlineColor === 'transparent' ? 'bg-pink-500/20 text-pink-300 border-pink-400' : 'bg-transparent text-gray-400 border-white/10 hover:border-white/20'}`}
-                >
-                  DEFAULT
-                </button>
-                <div className="relative w-7 h-7 rounded-full overflow-hidden border-[2px] border-pink-400 shadow-md group-hover:scale-105 transition-transform duration-300">
-                  <input
-                    type="color"
-                    value={shapeOutlineColor !== 'transparent' ? shapeOutlineColor : '#ffffff'}
-                    onChange={(e) => setShapeOutlineColor(e.target.value)}
-                    className="absolute -inset-4 w-16 h-16 cursor-pointer"
-                    title="Pick Outline Color"
-                  />
+        {/* Network Mesh Control Center (Replaced Shape Outline) */}
+        {['pencilmesh', 'pencilnetwork'].includes(selectedStyle) && (
+           <div className="mt-3 bg-[#0f0b1a] border border-[#1877F2]/20 rounded-xl p-4 shadow-xl backdrop-blur-xl animate-fade-in transition-all">
+              <button 
+                onClick={() => setIsMeshSettingsOpen(!isMeshSettingsOpen)}
+                className="w-full flex items-center justify-between text-[11px] uppercase text-[#1877F2] font-black tracking-widest outline-none py-1"
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="text-sm">🕸️</span> Network Mesh Settings
                 </div>
-            </div>
-        </div>
+                <svg className={`w-4 h-4 transition-transform duration-300 ${isMeshSettingsOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {isMeshSettingsOpen && (
+                <div className="pt-4 border-t border-[#1877F2]/20 mt-3 animate-fade-in">
+                  {/* Node System */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-3.5 border-b border-[#1877F2]/20 pb-1.5">
+                       <span className="text-[10px] text-[#1877F2]">⬤</span>
+                       <p className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Nodes</p>
+                    </div>
+                    <div className="space-y-5 px-1">
+                      <div>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <p className="text-[11px] text-gray-200 font-semibold tracking-wide">Point Density</p>
+                          <span className="text-[10px] font-mono text-[#1877F2] bg-[#1877F2]/10 px-1.5 py-0.5 rounded">{atomSize}</span>
+                        </div>
+                        <input type="range" min="10" max="150" step="1" value={atomSize} onChange={(e) => setAtomSize(parseInt(e.target.value))} className="w-full h-1.5 bg-blue-950 rounded-lg appearance-none cursor-pointer border-none accent-[#1877F2]" />
+                        <p className="text-[9px] text-gray-500 mt-1.5 leading-tight">Controls how closely dots are packed together.</p>
+                      </div>
+                      <div>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <p className="text-[11px] text-gray-200 font-semibold tracking-wide">Dot Size</p>
+                          <span className="text-[10px] font-mono text-[#1877F2] bg-[#1877F2]/10 px-1.5 py-0.5 rounded">{dotSize.toFixed(1)}x</span>
+                        </div>
+                        <input type="range" min="1" max="12" step="0.5" value={dotSize} onChange={(e) => setDotSize(parseFloat(e.target.value))} className="w-full h-1.5 bg-blue-950 rounded-lg appearance-none cursor-pointer border-none accent-[#1877F2]" />
+                        <div className="flex justify-between text-[8.5px] text-blue-500/40 mt-1.5 font-bold uppercase tracking-widest"><span>Micro</span><span>Massive</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Line System */}
+                  {selectedStyle === 'pencilmesh' && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3.5 border-b border-[#1877F2]/20 pb-1.5">
+                         <span className="text-[10px] text-[#1877F2]">➖</span>
+                         <p className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Connections</p>
+                      </div>
+                      <div className="space-y-5 px-1">
+                        {/* Reach Slider */}
+                        <div>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <p className="text-[11px] text-gray-200 font-semibold tracking-wide">Line Reach</p>
+                            <span className="text-[10px] font-mono text-[#1877F2] bg-[#1877F2]/10 px-1.5 py-0.5 rounded">{electronCount}</span>
+                          </div>
+                          <input type="range" min="0" max="40" step="1" value={electronCount} onChange={(e) => setElectronCount(parseInt(e.target.value))} className="w-full h-1.5 bg-blue-950 rounded-lg appearance-none cursor-pointer border-none accent-[#1877F2]" />
+                          <p className="text-[9px] text-gray-500 mt-1.5 leading-tight">How far the connecting lines can reach.</p>
+                        </div>
+                        {/* Thickness Slider */}
+                        <div>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <p className="text-[11px] text-gray-200 font-semibold tracking-wide">Line Thickness</p>
+                            <span className="text-[10px] font-mono text-[#1877F2] bg-[#1877F2]/10 px-1.5 py-0.5 rounded">{borderWidth.toFixed(1)}</span>
+                          </div>
+                          <input type="range" min="0" max="8" step="0.1" value={borderWidth} onChange={(e) => setBorderWidth(parseFloat(e.target.value))} className="w-full h-1.5 bg-blue-950 rounded-lg appearance-none cursor-pointer border-none accent-[#1877F2]" />
+                          <p className="text-[9px] text-gray-500 mt-1.5 leading-tight">Adjust how thick connecting lines appear.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+           </div>
+        )}
       </div>
 
       {/* Advanced Customization header */}
