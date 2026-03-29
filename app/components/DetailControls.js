@@ -17,32 +17,7 @@ export default function DetailControls({
           Details & Layout
         </label>
       </div>
-
-      {/* Workspace & Layout Card */}
-      <div className="bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 border-t-white/20 rounded-xl p-4 shadow-xl backdrop-blur-xl relative overflow-hidden group">
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-        <h3 className="text-[11px] uppercase text-gray-400 font-bold mb-3 flex items-center gap-2">
-          <span className="text-sm">🖼️</span> Canvas Layout
-        </h3>
-        
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            {['square', 'portrait', 'landscape'].map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setLayout(mode)}
-                className={`flex-1 py-2 rounded-lg border text-[10px] font-bold uppercase transition-all duration-300 ${
-                  layout === mode 
-                  ? 'bg-[#1877F2]/10 border-[#1877F2]/40 text-blue-400 shadow-[0_0_10px_rgba(24,119,242,0.1)]' 
-                  : 'bg-black/20 border-white/5 text-gray-500 hover:text-gray-300 hover:border-white/20'
-                }`}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
-
-        </div>
+      <div className="hidden">
       </div>
 
       {/* Feature Settings (Removed Drawing Details from here) */}

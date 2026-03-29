@@ -126,8 +126,8 @@ export default function ImageUploader({ onImageLoad, onClearImage, hasImage, onS
           onDrop={handleDrop}
           className={`relative overflow-hidden w-full h-[120px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${
             isDragging 
-            ? 'border-[#c1ff00] bg-[#c1ff00]/10 shadow-[0_0_15px_rgba(193,255,0,0.2)]' 
-            : 'border-white/10 bg-black/20 hover:border-[#c1ff00]/50 hover:bg-black/40'
+            ? 'border-[#1877F2] bg-[#1877F2]/10 shadow-[0_0_15px_rgba(24,119,242,0.2)]' 
+            : 'border-white/10 bg-black/20 hover:border-[#1877F2]/50 hover:bg-black/40'
           }`}
         >
           <input 
@@ -145,7 +145,7 @@ export default function ImageUploader({ onImageLoad, onClearImage, hasImage, onS
         <div className="flex gap-2">
             <button 
                 onClick={onClearImage}
-                className="flex-[2] py-2.5 rounded-lg bg-[#c1ff00] text-black text-[10px] font-bold uppercase tracking-widest hover:bg-[#a3d600] transition-colors shadow-[0_0_15px_rgba(193,255,0,0.3)]"
+                className="flex-[2] py-2.5 rounded-lg bg-[#1877F2]/10 border border-[#1877F2]/30 text-[#1877F2] text-[10px] font-bold uppercase tracking-widest hover:bg-[#1877F2]/20 active:scale-95 transition-all shadow-none"
             >
                 Clear All
             </button>

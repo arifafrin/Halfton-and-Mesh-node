@@ -145,7 +145,7 @@ export default function Home() {
             </button>
             <button 
               onClick={() => setAppMode('halftone')}
-              className={`flex-1 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all duration-300 ${appMode === 'halftone' ? 'bg-[#c1ff00]/20 border border-[#c1ff00]/50 text-[#c1ff00]' : 'bg-black/20 border border-white/5 text-gray-500 hover:text-gray-300'}`}
+              className={`flex-1 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all duration-300 ${appMode === 'halftone' ? 'bg-[#1877F2]/20 border border-[#1877F2]/50 text-[#1877F2]' : 'bg-black/20 border border-white/5 text-gray-500 hover:text-gray-300'}`}
             >
               🖼️ Upload
             </button>
