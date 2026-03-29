@@ -68,27 +68,24 @@ export default function ColorControls({ colors, onColorsChange, colorMode, onCol
         </h3>
 
         {/* Monochromatic Toggle */}
-        <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+        <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3 cursor-pointer" onClick={() => handleToggleMonoBlend(!useMonoBlend)}>
            <div>
-              <span className="text-[11px] font-bold text-indigo-400 block tracking-wide">Monochromatic Blend</span>
+              <span className="text-[11px] font-bold text-gray-300 block tracking-wide">Monochromatic Blend</span>
               <span className="text-[9px] text-gray-500 block mt-0.5">{useMonoBlend ? "ON: Auto-generating shades" : "OFF: Single Solid Fill active"}</span>
            </div>
-           <button 
-              onClick={() => handleToggleMonoBlend(!useMonoBlend)}
-              className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-300 ${useMonoBlend ? 'bg-indigo-500' : 'bg-white/10 hover:bg-white/20'}`}
-           >
-              <div className={`w-4 h-4 rounded-full bg-white shadow-md transition-transform duration-300 ${useMonoBlend ? 'translate-x-5' : 'translate-x-0'}`} />
-           </button>
+           <div className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-300 flex-shrink-0 relative ${useMonoBlend ? 'bg-[#1877F2]' : 'bg-white/10 hover:bg-white/20'}`}>
+              <div className={`absolute top-[2px] w-4 h-4 rounded-full bg-white shadow-md transition-all duration-300 ${useMonoBlend ? 'left-[calc(100%-18px)]' : 'left-[2px]'}`} />
+           </div>
         </div>
 
         {/* Option: Monochromatic Base Color */}
         {useMonoBlend ? (
-           <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.05)] transition-all group animate-fade-in">
+           <div className="flex items-center justify-between p-3 rounded-xl bg-[#1877F2]/10 border border-[#1877F2]/20 shadow-[0_0_15px_rgba(24,119,242,0.05)] transition-all group animate-fade-in">
               <div>
-                 <span className="text-[11px] font-bold text-indigo-300 block tracking-wide">Blend Seed Color</span>
-                 <span className="text-[9px] text-indigo-300/60 block mt-0.5">Pick base → gradient generated</span>
+                 <span className="text-[11px] font-bold text-[#1877F2] block tracking-wide">Blend Seed Color</span>
+                 <span className="text-[9px] text-[#1877F2]/60 block mt-0.5">Pick base → gradient generated</span>
               </div>
-              <div className="relative w-9 h-9 rounded-full overflow-hidden border-[3px] border-indigo-400 shadow-md group-hover:scale-105 transition-transform duration-300">
+              <div className="relative w-9 h-9 rounded-full overflow-hidden border-[3px] border-[#1877F2] shadow-md group-hover:scale-105 transition-transform duration-300">
                 <input
                   type="color"
                   value={monoBlendColor}

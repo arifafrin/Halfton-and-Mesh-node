@@ -238,14 +238,14 @@ export default function Home() {
                         <p className="text-[9px] text-gray-300">Spacing</p>
                         <span className="text-[9px] font-mono text-gray-400">{halftoneConfig.spacing}</span>
                       </div>
-                      <input type="range" min="2" max="50" step="1" value={halftoneConfig.spacing} onChange={(e) => setHalftoneConfig({...halftoneConfig, spacing: parseFloat(e.target.value)})} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#c1ff00]" />
+                      <input type="range" min="2" max="50" step="1" value={halftoneConfig.spacing} onChange={(e) => setHalftoneConfig({...halftoneConfig, spacing: parseFloat(e.target.value)})} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#1877F2]" />
                     </div>
                     <div>
                       <div className="flex justify-between items-center mb-1">
                         <p className="text-[9px] text-gray-300">Rotation</p>
                         <span className="text-[9px] font-mono text-gray-400">{halftoneConfig.rotation}°</span>
                       </div>
-                      <input type="range" min="-360" max="360" step="1" value={halftoneConfig.rotation} onChange={(e) => setHalftoneConfig({...halftoneConfig, rotation: parseFloat(e.target.value)})} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#c1ff00]" />
+                      <input type="range" min="-360" max="360" step="1" value={halftoneConfig.rotation} onChange={(e) => setHalftoneConfig({...halftoneConfig, rotation: parseFloat(e.target.value)})} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#1877F2]" />
                     </div>
                   </div>
                 </div>
@@ -265,7 +265,7 @@ export default function Home() {
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-[9px] text-gray-300">Outline Mode</p>
-                      <button onClick={() => setHalftoneConfig({...halftoneConfig, outlineMode: !halftoneConfig.outlineMode})} className={`w-7 h-4 rounded-full p-0.5 transition-colors duration-300 ${halftoneConfig.outlineMode ? 'bg-[#c1ff00]' : 'bg-white/10'}`}>
+                      <button onClick={() => setHalftoneConfig({...halftoneConfig, outlineMode: !halftoneConfig.outlineMode})} className={`w-7 h-4 rounded-full p-0.5 transition-colors duration-300 ${halftoneConfig.outlineMode ? 'bg-[#1877F2]' : 'bg-white/10'}`}>
                         <div className={`w-3 h-3 rounded-full bg-white transition-transform duration-300 ${halftoneConfig.outlineMode ? 'translate-x-3' : 'translate-x-0'}`} />
                       </button>
                     </div>
@@ -274,14 +274,14 @@ export default function Home() {
                         <p className="text-[9px] text-gray-300">Min Size</p>
                         <span className="text-[9px] font-mono text-gray-400">{halftoneConfig.minSize}</span>
                       </div>
-                      <input type="range" min="0" max="1" step="0.01" value={halftoneConfig.minSize} onChange={(e) => setHalftoneConfig({...halftoneConfig, minSize: parseFloat(e.target.value)})} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#c1ff00]" />
+                      <input type="range" min="0" max="1" step="0.01" value={halftoneConfig.minSize} onChange={(e) => setHalftoneConfig({...halftoneConfig, minSize: parseFloat(e.target.value)})} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#1877F2]" />
                     </div>
                     <div>
                       <div className="flex justify-between items-center mb-1">
                         <p className="text-[9px] text-gray-300">Max Size</p>
                         <span className="text-[9px] font-mono text-gray-400">{halftoneConfig.maxSize}</span>
                       </div>
-                      <input type="range" min="0" max="3" step="0.01" value={halftoneConfig.maxSize} onChange={(e) => setHalftoneConfig({...halftoneConfig, maxSize: parseFloat(e.target.value)})} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#c1ff00]" />
+                      <input type="range" min="0" max="3" step="0.01" value={halftoneConfig.maxSize} onChange={(e) => setHalftoneConfig({...halftoneConfig, maxSize: parseFloat(e.target.value)})} className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#1877F2]" />
                     </div>
                   </div>
                 </div>
