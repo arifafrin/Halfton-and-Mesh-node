@@ -168,6 +168,7 @@ export default function Home() {
               <div className="flex bg-[#1877F2]/10 border border-[#1877F2]/30 rounded-xl p-1 gap-1">
                 {[
                   { id: 'pencil', icon: '✏️', title: 'Pencil Tool' },
+                  { id: 'line', icon: '📏', title: 'Line Tool' },
                   { id: 'rectangle', icon: '⬜', title: 'Rectangle Tool' },
                   { id: 'ellipse', icon: '⭕', title: 'Ellipse Tool' },
                   { id: 'polygon', icon: '⬡', title: 'Polygon Tool' },

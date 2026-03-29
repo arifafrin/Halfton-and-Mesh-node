@@ -248,41 +248,34 @@ export default memo(function MapPreview({
            if (pts.length === 0) {
               currentPathRef.current = [{x: canvasX, y: canvasY}];
            } else {
-              let newX = canvasX;
-              let newY = canvasY;
-              
-              if (e.shiftKey && pts.length > 0) {
-                  const origin = pts[0];
-                  const angle = Math.atan2(canvasY - origin.y, canvasX - origin.x);
-                  const snappedAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
-                  const dist = Math.sqrt(Math.pow(canvasX - origin.x, 2) + Math.pow(canvasY - origin.y, 2));
-                  newX = origin.x + dist * Math.cos(snappedAngle);
-                  newY = origin.y + dist * Math.sin(snappedAngle);
-                  
-                  if (pts.length > 1) {
-                      pts[pts.length - 1] = { x: newX, y: newY };
-                  } else {
-                      pts.push({ x: newX, y: newY });
-                  }
-              } else {
-                  const last = pts[pts.length - 1];
-                  const dx = newX - last.x;
-                  const dy = newY - last.y;
-                  if (dx*dx + dy*dy > 9) { // ~3px limit
-                     pts.push({x: newX, y: newY});
-                  }
-              }
-              const livePathEl = document.getElementById('live-draw-path');
-              if (livePathEl) {
-                 const dString = 'M ' + pts.map(pt => `${parseFloat(pt.x.toFixed(2))},${parseFloat(pt.y.toFixed(2))}`).join(' L ');
-                 livePathEl.setAttribute('d', dString);
+              const last = pts[pts.length - 1];
+              const dx = canvasX - last.x;
+              const dy = canvasY - last.y;
+              if (dx*dx + dy*dy > 9) { // ~3px limit
+                 pts.push({x: canvasX, y: canvasY});
+                 const livePathEl = document.getElementById('live-draw-path');
+                 if (livePathEl) {
+                    const dString = 'M ' + pts.map(pt => `${parseFloat(pt.x.toFixed(2))},${parseFloat(pt.y.toFixed(2))}`).join(' L ');
+                    livePathEl.setAttribute('d', dString);
+                 }
               }
            }
        } else if (shapeOriginRef.current) {
            const origin = shapeOriginRef.current;
            let dString = '';
            
-           if (activeDrawTool === 'rectangle') {
+           if (activeDrawTool === 'line') {
+               let curX = canvasX;
+               let curY = canvasY;
+               if (e.shiftKey) {
+                   const angle = Math.atan2(curY - origin.y, curX - origin.x);
+                   const snappedAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+                   const dist = Math.sqrt(Math.pow(curX - origin.x, 2) + Math.pow(curY - origin.y, 2));
+                   curX = origin.x + dist * Math.cos(snappedAngle);
+                   curY = origin.y + dist * Math.sin(snappedAngle);
+               }
+               dString = `M ${origin.x},${origin.y} L ${curX},${curY}`;
+           } else if (activeDrawTool === 'rectangle') {
                let curX = canvasX;
                let curY = canvasY;
                
