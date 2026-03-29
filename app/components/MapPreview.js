@@ -845,22 +845,8 @@ export default memo(function MapPreview({
                        const stroke = outlineMode ? baseDotColor : 'none';
                        const sWidth = outlineMode ? 1.5 : 0;
                        
-                       if (dotStyle === 'square') {
-                          return <rect key={`hf-${i}`} x={n.x - n.r} y={n.y - n.r} width={n.r*2} height={n.r*2} fill={fill} stroke={stroke} strokeWidth={sWidth} />;
-                       }
-                       if (dotStyle === 'cross') {
-                          return (
-                             <g key={`hf-${i}`} transform={`translate(${n.x}, ${n.y})`} stroke={baseDotColor} strokeWidth={n.r * 0.4} strokeLinecap="round">
-                                 <line x1={-n.r} y1={0} x2={n.r} y2={0} />
-                                 <line x1={0} y1={-n.r} x2={0} y2={n.r} />
-                             </g>
-                          );
-                       }
-                       if (dotStyle === 'line') {
-                          return <line key={`hf-${i}`} x1={n.x - n.r} y1={n.y - n.r} x2={n.x + n.r} y2={n.y + n.r} stroke={baseDotColor} strokeWidth={Math.max(1, n.r * 0.5)} strokeLinecap="round"/>;
-                       }
-                       
-                       return <circle key={`hf-${i}`} cx={n.x} cy={n.y} r={n.r} fill={fill} stroke={stroke} strokeWidth={sWidth} />;
+                       const currentShape = appMode === 'draw' ? halftoneShape : dotStyle;
+                       return renderShape(`hf-${i}`, currentShape, n.x, n.y, n.r, fill, stroke, sWidth);
                     })}
                     </g>
                   )}
