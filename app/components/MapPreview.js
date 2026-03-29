@@ -573,6 +573,31 @@ export default memo(function MapPreview({
     ? 0 
     : (autoStrokeWidth !== null ? Math.min(userStroke, autoStrokeWidth) : userStroke);
 
+  const renderShape = (key, shape, cx, cy, r, fill, stroke = 'none', strokeWidth = 0) => {
+    switch (shape) {
+      case 'square':
+        return <rect key={key} x={cx - r} y={cy - r} width={r * 2} height={r * 2} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+      case 'diamond':
+        return <polygon key={key} points={`${cx},${cy - r*1.2} ${cx + r*1.2},${cy} ${cx},${cy + r*1.2} ${cx - r*1.2},${cy}`} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+      case 'heart':
+        const hr = r * 1.2;
+        const heartPath = `M ${cx},${cy + hr*0.5} C ${cx - hr},${cy - hr*0.5} ${cx - hr*0.5},${cy - hr*1.2} ${cx},${cy - hr*0.3} C ${cx + hr*0.5},${cy - hr*1.2} ${cx + hr},${cy - hr*0.5} ${cx},${cy + hr*0.5} Z`;
+        return <path key={key} d={heartPath} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+      case 'cross':
+        return (
+           <g key={key} transform={`translate(${cx}, ${cy})`} stroke={fill} strokeWidth={Math.max(1, r * 0.4)} strokeLinecap="round">
+               <line x1={-r} y1={0} x2={r} y2={0} />
+               <line x1={0} y1={-r} x2={0} y2={r} />
+           </g>
+        );
+      case 'line':
+        return <line key={key} x1={cx - r} y1={cy - r} x2={cx + r} y2={cy + r} stroke={fill} strokeWidth={Math.max(1, r * 0.5)} strokeLinecap="round"/>;
+      case 'circle':
+      default:
+        return <circle key={key} cx={cx} cy={cy} r={r} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
+    }
+  };
+
   const defs = (
     <defs>
       {styleConfig.isNetwork && (
@@ -588,7 +613,7 @@ export default memo(function MapPreview({
         const spacing = dotSize * 3;
         return (
           <pattern key={`dot-${p.id}`} id={`dot-${p.id}`} x="0" y="0" width={spacing} height={spacing} patternUnits="userSpaceOnUse">
-            <circle cx={spacing/2} cy={spacing/2} r={dotSize * 0.45} fill={p.fillColor} />
+            {renderShape(`pdot-${p.id}`, halftoneShape, spacing/2, spacing/2, dotSize * 0.45, p.fillColor)}
           </pattern>
         );
       })}
@@ -624,31 +649,6 @@ export default memo(function MapPreview({
       }
     }
     return inside;
-  };
-
-  const renderShape = (key, shape, cx, cy, r, fill, stroke = 'none', strokeWidth = 0) => {
-    switch (shape) {
-      case 'square':
-        return <rect key={key} x={cx - r} y={cy - r} width={r * 2} height={r * 2} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
-      case 'diamond':
-        return <polygon key={key} points={`${cx},${cy - r*1.2} ${cx + r*1.2},${cy} ${cx},${cy + r*1.2} ${cx - r*1.2},${cy}`} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
-      case 'heart':
-        const hr = r * 1.2;
-        const heartPath = `M ${cx},${cy + hr*0.5} C ${cx - hr},${cy - hr*0.5} ${cx - hr*0.5},${cy - hr*1.2} ${cx},${cy - hr*0.3} C ${cx + hr*0.5},${cy - hr*1.2} ${cx + hr},${cy - hr*0.5} ${cx},${cy + hr*0.5} Z`;
-        return <path key={key} d={heartPath} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
-      case 'cross':
-        return (
-           <g key={key} transform={`translate(${cx}, ${cy})`} stroke={fill} strokeWidth={Math.max(1, r * 0.4)} strokeLinecap="round">
-               <line x1={-r} y1={0} x2={r} y2={0} />
-               <line x1={0} y1={-r} x2={0} y2={r} />
-           </g>
-        );
-      case 'line':
-        return <line key={key} x1={cx - r} y1={cy - r} x2={cx + r} y2={cy + r} stroke={fill} strokeWidth={Math.max(1, r * 0.5)} strokeLinecap="round"/>;
-      case 'circle':
-      default:
-        return <circle key={key} cx={cx} cy={cy} r={r} fill={fill} stroke={stroke} strokeWidth={strokeWidth} />;
-    }
   };
 
   const renderPath = (path, globalIdx) => {

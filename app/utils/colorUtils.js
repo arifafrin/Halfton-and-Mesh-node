@@ -39,7 +39,6 @@ export const mapStyles = {
     fontColor: '#ffffff', fontFamily: 'Courier New, monospace',
     isDotted: true,
     isNetwork: true,
-    isNeuralMesh: true,
     isPencil: true,
     regionColors: ['#ff4500', '#ff6a00', '#ff8c00', '#ffa500', '#ff7f50', '#ffb380'],
   },
