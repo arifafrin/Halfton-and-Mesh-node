@@ -12,13 +12,6 @@ export default function DetailControls({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-1">
-        <label className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-          Details & Layout
-        </label>
-      </div>
-      <div className="hidden">
-      </div>
 
       {/* Feature Settings (Removed Drawing Details from here) */}
 
