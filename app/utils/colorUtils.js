@@ -64,17 +64,34 @@ export function generateMonochromaticPalette(baseHex, count = 6) {
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
 
+  let rRatio = r / 255, gRatio = g / 255, bRatio = b / 255;
+  let max = Math.max(rRatio, gRatio, bRatio), min = Math.min(rRatio, gRatio, bRatio);
+  let h = 0, s = 0, l = (max + min) / 2;
+
+  if (max !== min) {
+    let d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case rRatio: h = (gRatio - bRatio) / d + (gRatio < bRatio ? 6 : 0); break;
+      case gRatio: h = (bRatio - rRatio) / d + 2; break;
+      case bRatio: h = (rRatio - gRatio) / d + 4; break;
+    }
+    h *= 60;
+  }
+  s *= 100; l *= 100;
+
   const colors = [];
   for (let i = 0; i < count; i++) {
-    const factor = (i / (count - 1)) * 0.8;
-    const newR = Math.round(r + (255 - r) * factor);
-    const newG = Math.round(g + (255 - g) * factor);
-    const newB = Math.round(b + (255 - b) * factor);
-    const toHex = (n) => {
-        const h = Math.max(0, Math.min(255, n)).toString(16);
-        return h.length === 1 ? '0' + h : h;
-    };
-    colors.push(`#${toHex(newR)}${toHex(newG)}${toHex(newB)}`);
+    // factor from 0.0 (center) to 1.0 (edge)
+    const factor = i / (count - 1 || 1);
+    
+    // Instead of fading to white, we fade to a richer/darker shade of the same hue!
+    // We reduce Lightness by up to 60%, but keep saturation high so it remains a "blend of red".
+    let newL = l - (l * 0.6 * factor);
+    // Add a slight saturation boost towards the edges for neon crispness
+    let newS = Math.min(100, s + (factor * 15));
+    
+    colors.push(hslToHex(h, newS, newL));
   }
   return colors;
 }
