@@ -265,16 +265,66 @@ export default memo(function MapPreview({
            let dString = '';
            
            if (activeDrawTool === 'rectangle') {
-               const minX = Math.min(origin.x, canvasX);
-               const maxX = Math.max(origin.x, canvasX);
-               const minY = Math.min(origin.y, canvasY);
-               const maxY = Math.max(origin.y, canvasY);
+               let curX = canvasX;
+               let curY = canvasY;
+               
+               if (e.shiftKey) {
+                   const width = Math.abs(curX - origin.x);
+                   const height = Math.abs(curY - origin.y);
+                   const size = Math.max(width, height);
+                   curX = origin.x + (curX > origin.x ? size : -size);
+                   curY = origin.y + (curY > origin.y ? size : -size);
+               }
+               
+               let minX, maxX, minY, maxY;
+               
+               if (e.altKey) {
+                   const dx = Math.abs(curX - origin.x);
+                   const dy = Math.abs(curY - origin.y);
+                   minX = origin.x - dx;
+                   maxX = origin.x + dx;
+                   minY = origin.y - dy;
+                   maxY = origin.y + dy;
+               } else {
+                   minX = Math.min(origin.x, curX);
+                   maxX = Math.max(origin.x, curX);
+                   minY = Math.min(origin.y, curY);
+                   maxY = Math.max(origin.y, curY);
+               }
+               
                dString = `M ${minX},${minY} L ${maxX},${minY} L ${maxX},${maxY} L ${minX},${maxY} Z`;
            } else if (activeDrawTool === 'ellipse') {
-               const cx = (origin.x + canvasX) / 2;
-               const cy = (origin.y + canvasY) / 2;
-               const rx = Math.abs(canvasX - origin.x) / 2;
-               const ry = Math.abs(canvasY - origin.y) / 2;
+               let curX = canvasX;
+               let curY = canvasY;
+               
+               if (e.shiftKey) {
+                   const width = Math.abs(curX - origin.x);
+                   const height = Math.abs(curY - origin.y);
+                   const size = Math.max(width, height);
+                   curX = origin.x + (curX > origin.x ? size : -size);
+                   curY = origin.y + (curY > origin.y ? size : -size);
+               }
+               
+               let minX, maxX, minY, maxY;
+               
+               if (e.altKey) {
+                   const dx = Math.abs(curX - origin.x);
+                   const dy = Math.abs(curY - origin.y);
+                   minX = origin.x - dx;
+                   maxX = origin.x + dx;
+                   minY = origin.y - dy;
+                   maxY = origin.y + dy;
+               } else {
+                   minX = Math.min(origin.x, curX);
+                   maxX = Math.max(origin.x, curX);
+                   minY = Math.min(origin.y, curY);
+                   maxY = Math.max(origin.y, curY);
+               }
+               
+               const cx = (minX + maxX) / 2;
+               const cy = (minY + maxY) / 2;
+               const rx = Math.abs(maxX - minX) / 2;
+               const ry = Math.abs(maxY - minY) / 2;
                
                let pts = [];
                for (let i = 0; i < 48; i++) {
@@ -288,6 +338,10 @@ export default memo(function MapPreview({
                const radius = Math.max(1, Math.sqrt(Math.pow(canvasX - cx, 2) + Math.pow(canvasY - cy, 2)));
                
                let baseAngle = Math.atan2(canvasY - cy, canvasX - cx);
+               if (e.shiftKey) {
+                   baseAngle = -Math.PI / 2;
+               }
+               
                let points = [];
                
                if (activeDrawTool === 'polygon') {
