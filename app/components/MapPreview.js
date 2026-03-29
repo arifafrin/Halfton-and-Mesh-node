@@ -5,7 +5,7 @@ import { mapStyles, generateMonochromaticPalette } from '../utils/colorUtils';
 
 export default memo(function MapPreview({ 
   style, 
-  colors, 
+  colors: originalColors, 
   onSvgRef,
   bgMode = 'transparent',
   customBgColor = '#ffffff',
@@ -513,6 +513,7 @@ export default memo(function MapPreview({
     return [];
   }, [halftoneConfig?.useMonoBlend, halftoneConfig?.monoBlendColor]);
 
+  const colors = monoPalette.length > 0 ? monoPalette : originalColors;
   const styleConfig = mapStyles[style] || mapStyles.pencilbasic;
   const backgroundColor = bgMode === 'transparent' 
     ? 'transparent' 
@@ -658,7 +659,10 @@ export default memo(function MapPreview({
     if (styleConfig.isDotted && !styleConfig.isRadialDotted) displayFill = `url(#dot-${path.id})`;
     if (styleConfig.isRadialDotted) displayFill = 'transparent'; 
     
-    const displayStroke = styleConfig.stroke;
+    // Fix: Match the drawing outline to the primary node color if it is a Gradient Mesh
+    const displayStroke = (styleConfig.id === 'pencilmesh' && colors[0] && colors[0] !== 'transparent') 
+       ? colors[0] 
+       : styleConfig.stroke;
 
     let radialDots = null;
     if (styleConfig.isRadialDotted && path.bounds) {
