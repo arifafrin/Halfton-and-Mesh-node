@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { aiColorThemes, generateRandomPalette, generateMonochromaticPalette } from '../utils/colorUtils';
 
-export default function ColorControls({ colors, onColorsChange, colorMode, onColorModeChange, bgMode, setBgMode, customBgColor, setCustomBgColor, pinColor, setPinColor, pinEnabled }) {
+export default function ColorControls({ colors, onColorsChange, colorMode, onColorModeChange, bgMode, setBgMode, customBgColor, setCustomBgColor, shapeOutlineColor, setShapeOutlineColor, pinColor, setPinColor, pinEnabled, disabled }) {
 
   const [globalSolidColor, setGlobalSolidColor] = useState(colors[0] || '#1877F2');
   const [monoBlendColor, setMonoBlendColor] = useState('#ff4500');
@@ -116,6 +116,31 @@ export default function ColorControls({ colors, onColorsChange, colorMode, onCol
               </div>
            </div>
         )}
+        
+        {/* Option: Shape Outline Color */}
+        <div className="flex items-center justify-between p-3 rounded-xl bg-pink-500/10 border border-pink-500/20 shadow-[0_0_15px_rgba(236,72,153,0.05)] transition-all group animate-fade-in mt-3">
+            <div>
+                <span className="text-[11px] font-bold text-pink-300 block tracking-wide">Shape Outline</span>
+                <span className="text-[9px] text-pink-300/60 block mt-0.5">Boundary stroke color</span>
+            </div>
+            <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setShapeOutlineColor('transparent')}
+                  className={`px-2 py-1 text-[9px] rounded font-bold border ${shapeOutlineColor === 'transparent' ? 'bg-pink-500/20 text-pink-300 border-pink-400' : 'bg-transparent text-gray-400 border-white/10 hover:border-white/20'}`}
+                >
+                  DEFAULT
+                </button>
+                <div className="relative w-7 h-7 rounded-full overflow-hidden border-[2px] border-pink-400 shadow-md group-hover:scale-105 transition-transform duration-300">
+                  <input
+                    type="color"
+                    value={shapeOutlineColor !== 'transparent' ? shapeOutlineColor : '#ffffff'}
+                    onChange={(e) => setShapeOutlineColor(e.target.value)}
+                    className="absolute -inset-4 w-16 h-16 cursor-pointer"
+                    title="Pick Outline Color"
+                  />
+                </div>
+            </div>
+        </div>
       </div>
 
       {/* Advanced Customization header */}

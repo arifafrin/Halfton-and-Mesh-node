@@ -660,9 +660,10 @@ export default memo(function MapPreview({
     if (styleConfig.isRadialDotted) displayFill = 'transparent'; 
     
     // Fix: Match the drawing outline to the primary node color if it is a Gradient Mesh
-    const displayStroke = (styleConfig.id === 'pencilmesh' && colors[0] && colors[0] !== 'transparent') 
+    const baseStroke = (styleConfig.id === 'pencilmesh' && colors[0] && colors[0] !== 'transparent') 
        ? colors[0] 
        : styleConfig.stroke;
+    const displayStroke = (shapeOutlineColor && shapeOutlineColor !== 'transparent') ? shapeOutlineColor : baseStroke;
 
     let radialDots = null;
     if (styleConfig.isRadialDotted && path.bounds) {
@@ -878,6 +879,9 @@ export default memo(function MapPreview({
                      allPaths.forEach(p => {
                      if (!p.bounds) return;
                      const b = p.bounds;
+                     const midX = (b.minX + b.maxX) / 2;
+                     const midY = (b.minY + b.maxY) / 2;
+                     const maxScaleDist = Math.max((b.maxX - b.minX)/2, (b.maxY - b.minY)/2) || 1;
                      
                      // Extract outline points from path
                      const matches = p.d.match(/[ML]\s*(-?[\d.]+)[,\s]+(-?[\d.]+)/g);
@@ -894,11 +898,13 @@ export default memo(function MapPreview({
                      // Add outline points as nodes
                      const outlineStep = Math.max(1, Math.floor(outlinePoints.length / 80));
                      for (let i = 0; i < outlinePoints.length; i += outlineStep) {
+                         const ptsX = outlinePoints[i].x;
+                         const ptsY = outlinePoints[i].y;
                          nodes.push({ 
-                             x: outlinePoints[i].x, 
-                             y: outlinePoints[i].y, 
+                             x: ptsX, 
+                             y: ptsY, 
                              regionIdx: p.index,
-                             ratio: (outlinePoints[i].x - b.minX) / (b.maxX - b.minX || 1)
+                             ratio: Math.min(1, Math.sqrt((ptsX - midX)**2 + (ptsY - midY)**2) / maxScaleDist)
                          });
                      }
                      
@@ -927,7 +933,7 @@ export default memo(function MapPreview({
                                          x: nx, 
                                          y: ny, 
                                          regionIdx: p.index,
-                                         ratio: (nx - b.minX) / (b.maxX - b.minX || 1)
+                                         ratio: Math.min(1, Math.sqrt((nx - midX)**2 + (ny - midY)**2) / maxScaleDist)
                                      });
                                  }
                              }

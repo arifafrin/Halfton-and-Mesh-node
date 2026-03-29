@@ -24,6 +24,7 @@ export default function Home() {
   const [stockMode, setStockMode] = useState(true);
   const [dotSize, setDotSize] = useState(3);
   const [halftoneShape, setHalftoneShape] = useState('circle');
+  const [shapeOutlineColor, setShapeOutlineColor] = useState('transparent');
   
   // Location Pin State
   const [pinEnabled, setPinEnabled] = useState(false);
@@ -369,6 +370,7 @@ export default function Home() {
               onColorModeChange={setColorMode}
               bgMode={bgMode} setBgMode={setBgMode}
               customBgColor={customBgColor} setCustomBgColor={setCustomBgColor}
+              shapeOutlineColor={shapeOutlineColor} setShapeOutlineColor={setShapeOutlineColor}
               pinColor={pinColor} setPinColor={setPinColor}
               pinEnabled={pinEnabled}
               disabled={appMode === 'halftone'}
@@ -438,13 +440,14 @@ export default function Home() {
                 onSvgRef={handleSvgRef}
                 bgMode={bgMode}
                 customBgColor={customBgColor}
+                shapeOutlineColor={shapeOutlineColor}
+                stockMode={stockMode}
                 layout={layout}
                 showLabels={false}
                 showTitle={false}
                 borderWidth={borderWidth}
                 debugMode={debugMode}
                 countryName={'Custom Drawing'}
-                stockMode={stockMode}
                 includeIslands={false}
                 dotSize={dotSize}
                 showAtom={showAtom}
