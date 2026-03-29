@@ -292,7 +292,7 @@ export default function Home() {
         </div>
 
         {/* Halftone Drawing Details - above Export */}
-        {(selectedStyle === 'pencilnetwork' || selectedStyle === 'pencilradial') && appMode === 'draw' && (
+        {(selectedStyle === 'pencilnetwork' || selectedStyle === 'pencilradial' || selectedStyle === 'pencilmesh') && appMode === 'draw' && (
         <div className="px-4 pt-3 pb-0 shrink-0 border-t border-white/5">
           <div className="bg-gradient-to-b from-white/[0.05] to-transparent border border-white/10 rounded-xl p-3 shadow-xl">
             <h3 className="text-[11px] uppercase text-gray-400 font-bold mb-3 flex items-center gap-2">

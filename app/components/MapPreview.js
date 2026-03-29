@@ -864,7 +864,7 @@ export default memo(function MapPreview({
 
 
 
-          {(appMode === 'draw' || (appMode === 'draw' && !!uploadedImage)) && styleConfig.isNeuralMesh && (
+          {(appMode === 'draw' && !uploadedImage) && styleConfig.isNeuralMesh && (
             <g id="neural-mesh-overlay">
               {(() => {
                  let nodes = [];
